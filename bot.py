@@ -51,13 +51,25 @@ async def process_agreement(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("✅ جزاكِ الله خيراً.\n\nيرجى تحديد الجنس:", reply_markup=kb.get_gender_kb())
     await state.set_state(Registration.gender)
 
-# 3. إيقاف الذكور وتوجيه الأسئلة للإناث
-@dp.callback_query(Registration.gender, F.data.startswith("gender_"))
+# 3. إيقاف الذكور وتوجيه 
+    @dp.callback_query(Registration.gender, F.data.startswith("gender_"))
 async def process_gender(callback: CallbackQuery, state: FSMContext):
+    # تصفير الحالة لضمان بداية نظيفة
+    await state.clear() 
+    
     if "male" in callback.data:
-        await callback.message.edit_text("عذراً، التسجيل للذكور متوقف مؤقتاً. نستقبل طلبات الإناث فقط في هذه المرحلة لضبط التوازن.")
-        await state.clear()
+        # رسالة لبقة للذكور بدلاً من خطأ التحميل
+        await callback.message.edit_text(
+            "نعتذر منك، البوت حالياً في مرحلة استقبال طلبات الإناث فقط.\n"
+            "نقدّر تفهمكم، وسنعلن عن فتح باب التسجيل للذكور قريباً جداً. تابعنا للإشعار بذلك."
+        )
         return
+    
+    # إذا كانت أنثى
+    await state.set_state(Registration.age) # الانتقال للحالة التالية
+    await state.update_data(gender="أنثى")
+    await callback.message.edit_text("كم تبلغين من العمر؟ (نرجو كتابة العمر بالأرقام، مثال: 35)")
+
     
     await state.update_data(gender="أنثى")
     await callback.message.edit_text("كم تبلغين من العمر؟ (نرجو كتابة العمر بالأرقام، مثال: 35)")
