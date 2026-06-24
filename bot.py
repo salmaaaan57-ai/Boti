@@ -24,7 +24,7 @@ dp = Dispatcher(storage=MemoryStorage())
 # 1. إعداد قاعدة البيانات
 # ==========================================
 async def init_db():
-    async with aiosqlite.connect('bot_database.db') as db:
+    async with aiosqlite.connect('marriage_db.db') as db:
         await db.execute('''
             CREATE TABLE IF NOT EXISTS users (
                 user_id INTEGER PRIMARY KEY,
@@ -190,7 +190,7 @@ async def process_state_btn(callback: CallbackQuery, state: FSMContext):
     state_name = callback.data.replace("state_", "")
     if state_name == "manual":
         await callback.message.edit_text("يرجى كتابة اسم الولاية أو المدينة:")
-        return # ننتظر الرد النصي في الدالة التالية
+        return 
     
     await state.update_data(state_name=state_name)
     await callback.message.edit_text("هل لديك مرونة في الانتقال أو السفر خارج بلد إقامتك الحالي؟", reply_markup=kb.get_travel_kb())
@@ -249,8 +249,8 @@ async def process_bio(message: Message, state: FSMContext):
     await state.update_data(bio=message.text)
     data = await state.get_data()
     
-    # حفظ في قاعدة البيانات
-    async with aiosqlite.connect('bot_database.db') as db:
+    # حفظ في قاعدة البيانات (تم تعديل المسافات واسم القاعدة لتعمل بسلاسة)
+    async with aiosqlite.connect('marriage_db.db') as db:
         await db.execute('''
             INSERT OR REPLACE INTO users 
             (user_id, gender, age, social_status, kids, education, job, prayer, smoking, 
@@ -293,21 +293,4 @@ async def main():
 
 if __name__ == '__main__':
     asyncio.run(main())
-    status = 1 if action == "ver" else 0
-    async with aiosqlite.connect("marriage_db.db", timeout=30) as db: # اسم الملف الصحيح
-        await db.execute("UPDATE users SET verified = ? WHERE id = ?", (status, user_id))
-        await db.commit()
-    await bot.send_message(int(user_id), "تم قبول طلبك!" if status == 1 else "تم رفض طلبك.")
-    await call.message.edit_reply_markup(reply_markup=None)
 
-async def main():
-    async with aiosqlite.connect("marriage_bot.db") as db:
-        await db.execute('''CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY, gender TEXT, age INTEGER, status TEXT,
-            bio TEXT, photo_id TEXT, verified INTEGER, created_at TIMESTAMP)''')
-        await db.commit()
-    dp.include_router(router)
-    await dp.start_polling(bot)
-
-if __name__ == '__main__':
-    asyncio.run(main())
