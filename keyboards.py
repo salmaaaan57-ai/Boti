@@ -1,13 +1,11 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-# 1. الميثاق والنية
 def get_agreement_kb() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
     kb.button(text="أتعهد بذلك وأوافق على الشروط", callback_data="agree_terms")
     return kb.as_markup()
 
-# 2. الجنس
 def get_gender_kb() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
     kb.button(text="ذكر 👨", callback_data="gender_male")
@@ -15,25 +13,23 @@ def get_gender_kb() -> InlineKeyboardMarkup:
     kb.adjust(2)
     return kb.as_markup()
 
-# 3. الحالة الاجتماعية
 def get_social_status_kb() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
-    statuses = ["أعزب / بكر", "متزوج", "مطلق", "أرمل"]
+    # شرعاً لا يصح للمتزوجة طلب الزواج، لذا تم تعديل الخيارات للإناث
+    statuses = ["بكر / لم يسبق لها الزواج", "مطلقة", "أرملة"]
     for s in statuses:
         kb.button(text=s, callback_data=f"status_{s}")
-    kb.adjust(2)
+    kb.adjust(1)
     return kb.as_markup()
 
-# 4. الأبناء والحضانة
 def get_kids_kb() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
     kb.button(text="لا يوجد", callback_data="kids_none")
     kb.button(text="نعم، وهم معي", callback_data="kids_with_me")
-    kb.button(text="نعم، مع الطرف الآخر", callback_data="kids_with_other")
+    kb.button(text="نعم، مع والدهم", callback_data="kids_with_other")
     kb.adjust(1)
     return kb.as_markup()
 
-# 5. المستوى التعليمي
 def get_education_kb() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
     levels = ["ثانوي فما دون", "دبلوم", "بكالوريوس", "ماجستير / دكتوراه"]
@@ -42,30 +38,26 @@ def get_education_kb() -> InlineKeyboardMarkup:
     kb.adjust(2)
     return kb.as_markup()
 
-# 6. الوظيفة
 def get_jobs_kb() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
     jobs = [
-        "تجارة وأعمال حرة", "هندسة وتقنية معلومات", 
-        "قطاع طبي وصحي", "تعليم وأكاديميا", 
-        "خدمات لوجستية ونقل", "قطاع فني وحرفي", 
-        "موظف إداري / حكومي", "أخرى"
+        "مجال طبي وصحي", "تعليم وأكاديميا", 
+        "هندسة وتقنية معلومات", "تجارة وأعمال", 
+        "موظفة إدارية / حكومية", "لا أعمل حالياً", "أخرى"
     ]
     for job in jobs:
         kb.button(text=job, callback_data=f"job_{job}")
     kb.adjust(2)
     return kb.as_markup()
 
-# 7. الالتزام بالصلاة
 def get_prayer_kb() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
-    kb.button(text="محافظ ولله الحمد", callback_data="pray_good")
+    kb.button(text="محافظة ولله الحمد", callback_data="pray_good")
     kb.button(text="أغلب الأوقات", callback_data="pray_average")
-    kb.button(text="مقصر وأسأل الله الهداية", callback_data="pray_bad")
+    kb.button(text="مقصرة وأسأل الله الهداية", callback_data="pray_bad")
     kb.adjust(1)
     return kb.as_markup()
 
-# 8. التدخين
 def get_smoking_kb() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
     kb.button(text="نعم", callback_data="smoke_yes")
@@ -74,7 +66,6 @@ def get_smoking_kb() -> InlineKeyboardMarkup:
     kb.adjust(3)
     return kb.as_markup()
 
-# 9. الحجاب والمظهر (للنساء فقط)
 def get_hijab_kb() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
     styles = ["منتقبة", "محجبة عباءة", "محجبة عادي", "غير محجبة"]
@@ -83,7 +74,6 @@ def get_hijab_kb() -> InlineKeyboardMarkup:
     kb.adjust(2)
     return kb.as_markup()
 
-# 10. الإقامة (البلد)
 def get_country_kb() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
     countries = ["تركيا 🇹🇷", "ألمانيا 🇩🇪", "ألبانيا 🇦🇱", "أخرى"]
@@ -92,7 +82,6 @@ def get_country_kb() -> InlineKeyboardMarkup:
     kb.adjust(2)
     return kb.as_markup()
 
-# 11. الولايات (ديناميكي بناءً على البلد)
 def get_states_kb(country: str) -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
     states = []
@@ -106,22 +95,21 @@ def get_states_kb(country: str) -> InlineKeyboardMarkup:
     for state in states:
         kb.button(text=state, callback_data=f"state_{state}")
     
-    if not states: # في حال اختيار "أخرى"
+    if not states:
         kb.button(text="إدخال يدوي", callback_data="state_manual")
         
     kb.adjust(2)
     return kb.as_markup()
 
-# 12. قابلية السفر والتنقل
 def get_travel_kb() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
-    kb.button(text="نعم، لا أمانع السفر/الانتقال", callback_data="travel_yes")
+    kb.button(text="نعم، لا أمانع الانتقال/السفر", callback_data="travel_yes")
     kb.button(text="لا أرغب في الانتقال", callback_data="travel_no")
     kb.adjust(1)
     return kb.as_markup()
 
-# 13. أنماط الزواج (متعدد الاختيارات برمجياً في bot.py)
-def get_marriage_types_kb() -> InlineKeyboardMarkup:
+# تم تحديث هذه الدالة لدعم الاختيار المتعدد (وضع علامة ✅)
+def get_marriage_types_kb(selected_types: list) -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
     types = [
         "شرعي موثق قانوناً", 
@@ -129,15 +117,20 @@ def get_marriage_types_kb() -> InlineKeyboardMarkup:
         "شرعي زيارات", 
         "مسيار (معلن أو غير معلن)"
     ]
+    
     for t in types:
-        kb.button(text=t, callback_data=f"mtype_{t}")
+        mark = "✅ " if t in selected_types else ""
+        kb.button(text=f"{mark}{t}", callback_data=f"mtype_{t}")
+    
+    if selected_types:
+        kb.button(text="💾 تأكيد الاختيارات", callback_data="mtype_confirm")
+        
     kb.adjust(1)
     return kb.as_markup()
 
-# 14. السكن (يظهر فقط لمن يختار مسيار أو زيارات)
 def get_housing_kb() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
     kb.button(text="السكن متوفر لدي", callback_data="house_mine")
-    kb.button(text="يشترط توفره من الطرف الآخر", callback_data="house_other")
+    kb.button(text="يشترط توفره من الزوج", callback_data="house_other")
     kb.adjust(1)
     return kb.as_markup()
