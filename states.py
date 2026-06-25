@@ -3,7 +3,6 @@ from aiogram.fsm.state import State, StatesGroup
 class Registration(StatesGroup):
     agreement = State()
     name = State()
-    contact_info = State()  # الخانة الجديدة التي تمت إضافتها
     gender = State()
     age = State()
     social_status = State()
@@ -23,4 +22,5 @@ class Registration(StatesGroup):
     marriage_type = State()
     housing = State()
     partner_specs = State()
+    contact_info = State()
     bio = State()
