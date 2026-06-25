@@ -11,7 +11,7 @@ from states import Registration
 import keyboards as kb
 
 logging.basicConfig(level=logging.INFO)
-TOKEN = "8868061017:AAFHWqZAljMOwkFmzPRa5AHk7HwtRxESKwo"
+TOKEN = "8787127714:AAEOsu05CBrLstCCs0OQWVMoA3f5TuVQ5CI"
 
 # =========== إعدادات الإدارة والقناة ===========
 ADMIN_ID = 7556662373  
