@@ -10,7 +10,7 @@ class Registration(StatesGroup):
     job = State()
     prayer = State()
     smoking = State()
-    hijab = State()
+    hijab = State()  # للإناث فقط
     height = State()
     weight = State()
     skin_color = State()
@@ -19,6 +19,6 @@ class Registration(StatesGroup):
     state_name = State()
     travel_willingness = State()
     marriage_type = State()
-    housing = State()
+    housing = State()  # مفصلي في المسيار
     partner_specs = State()
     bio = State()
