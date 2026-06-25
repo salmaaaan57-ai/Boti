@@ -11,15 +11,19 @@ from states import Registration
 import keyboards as kb
 
 logging.basicConfig(level=logging.INFO)
+
+# ===============================================
+# ⚙️ الإعدادات الأساسية (ضع بياناتك هنا)
+# ===============================================
 TOKEN = "8787127714:AAEOsu05CBrLstCCs0OQWVMoA3f5TuVQ5CI"
-ADMIN_ID = 7556662373  
-CHANNEL_ID = -1003869521696 
+ADMIN_ID = 7556662373          # الآي دي الرقمي الخاص بك
+CHANNEL_ID = "-1003869521696"  # آي دي القناة (يجب أن يبدأ بـ -100)
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
 
 # ===============================================
-# تهيئة قاعدة البيانات
+# 🗄️ تهيئة قاعدة البيانات
 # ===============================================
 async def init_db():
     async with aiosqlite.connect('marriage_db.db') as db:
@@ -32,7 +36,7 @@ async def init_db():
         await db.commit()
 
 # ===============================================
-# بدء التسجيل والتوجيه
+# 🚀 بدء التسجيل والتوجيه
 # ===============================================
 @dp.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext):
@@ -52,9 +56,10 @@ async def process_name(message: Message, state: FSMContext):
     await message.answer("📝 **[سؤال 2 من 17]**\nيرجى تحديد الجنس:", reply_markup=kb.get_gender_kb())
     await state.set_state(Registration.gender)
 
+# [التصحيح القطعي لمعالجة الجنس]
 @dp.callback_query(Registration.gender, F.data.startswith("gender_"))
 async def process_gender(callback: CallbackQuery, state: FSMContext):
-    gender = "ذكر" if "male" in callback.data else "أنثى"
+    gender = "ذكر" if callback.data == "gender_male" else "أنثى"
     await state.update_data(gender=gender)
     await callback.message.edit_text("📝 **[سؤال 3 من 17]**\nكم يبلغ العمر؟ (يرجى كتابة أرقام فقط، مثال: 35)")
     await state.set_state(Registration.age)
@@ -69,7 +74,7 @@ async def process_age(message: Message, state: FSMContext):
     await state.set_state(Registration.social_status)
 
 # ===============================================
-# الفلترة الذكية للأبناء والحجاب
+# 🔄 الفلترة الذكية للأبناء والحجاب
 # ===============================================
 @dp.callback_query(Registration.social_status, F.data.startswith("status_"))
 async def process_status(callback: CallbackQuery, state: FSMContext):
@@ -130,7 +135,7 @@ async def process_hijab(callback: CallbackQuery, state: FSMContext):
     await state.set_state(Registration.height)
 
 # ===============================================
-# الإدخالات الموجهة بأمثلة
+# ✍️ الإدخالات الموجهة بأمثلة
 # ===============================================
 @dp.message(Registration.height)
 async def process_height(message: Message, state: FSMContext):
@@ -174,7 +179,7 @@ async def process_state_text(message: Message, state: FSMContext):
     await state.set_state(Registration.travel_willingness)
 
 # ===============================================
-# الاختيار المتعدد (Multi-Select) لنوع الزواج
+# 🔘 الاختيار المتعدد (Multi-Select) لنوع الزواج
 # ===============================================
 @dp.callback_query(Registration.travel_willingness, F.data.startswith("travel_"))
 async def process_travel(callback: CallbackQuery, state: FSMContext):
@@ -228,7 +233,7 @@ async def ask_partner_specs(message, state: FSMContext):
     await state.set_state(Registration.partner_specs)
 
 # ===============================================
-# صمام التواصل المزدوج والنهاية
+# 🔒 صمام التواصل المزدوج والنهاية
 # ===============================================
 @dp.message(Registration.partner_specs)
 async def process_partner_specs(message: Message, state: FSMContext):
@@ -247,12 +252,11 @@ async def process_bio(message: Message, state: FSMContext):
     await state.update_data(bio=message.text)
     data = await state.get_data()
     
-    # [تأمين سحب البيانات لتجنب الانهيار]
+    # تأمين سحب البيانات لتجنب الانهيار
     user_id = message.from_user.id
     raw_username = message.from_user.username
     safe_username = f"@{raw_username}" if raw_username else "بدون معرف (مخفي)"
 
-    # رسالة التنبيه النهائية
     await message.answer("⚠️ **تنبيه:**\nجاري حفظ الاستمارة، يرجى العلم أن التعديل لا يُتاح إلا لمرة واحدة فقط لضمان الجدية والموثوقية.")
 
     # الحفظ في قاعدة البيانات
@@ -297,12 +301,12 @@ async def process_bio(message: Message, state: FSMContext):
     try:
         await bot.send_message(ADMIN_ID, admin_card, reply_markup=kb.get_admin_kb(user_id), parse_mode="Markdown")
     except Exception as e:
-        print(f"Error: {e}")
+        logging.error(f"Error sending admin card: {e}")
 
     await state.clear()
 
 # ===============================================
-# قرارات الإدارة
+# ⚖️ قرارات الإدارة
 # ===============================================
 @dp.callback_query(F.data.startswith("admin_approve_"))
 async def admin_approve(callback: CallbackQuery):
@@ -321,8 +325,13 @@ async def admin_approve(callback: CallbackQuery):
 async def admin_reject(callback: CallbackQuery):
     await callback.message.edit_text(f"{callback.message.text}\n\n❌ **تم الرفض.**")
 
+# ===============================================
+# ⚙️ المحرك الرئيسي ومانع التعارض (Conflict Resolver)
+# ===============================================
 async def main():
     await init_db()
+    # هذا السطر يطرد أي جلسة معلقة أو متعارضة قبل الإقلاع لمنع الانهيار
+    await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
 if __name__ == '__main__':
