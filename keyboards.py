@@ -1,134 +1,104 @@
-from aiogram.types import InlineKeyboardMarkup
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-def get_agreement_kb() -> InlineKeyboardMarkup:
-    kb = InlineKeyboardBuilder()
-    kb.button(text="أتعهد بالجدية وأوافق على الشروط", callback_data="agree_terms")
-    return kb.as_markup()
+def get_agreement_kb():
+    builder = InlineKeyboardBuilder()
+    builder.button(text="أتعهد بالجدية وأوافق على الشروط", callback_data="agree_terms")
+    return builder.as_markup()
 
-# زر التعديل لمن سجل مسبقاً
-def get_edit_kb() -> InlineKeyboardMarkup:
-    kb = InlineKeyboardBuilder()
-    kb.button(text="تعديل بياناتي (مسموح مرة واحدة فقط)", callback_data="edit_profile")
-    return kb.as_markup()
+def get_gender_kb():
+    builder = InlineKeyboardBuilder()
+    builder.button(text="ذكر", callback_data="gender_male")
+    builder.button(text="أنثى", callback_data="gender_female")
+    builder.adjust(2)
+    return builder.as_markup()
 
-# أزرار الإدارة (تظهر لك فقط)
-def get_admin_kb(user_id: int) -> InlineKeyboardMarkup:
-    kb = InlineKeyboardBuilder()
-    kb.button(text="✅ قبول ونشر في القناة", callback_data=f"admin_approve_{user_id}")
-    kb.button(text="❌ رفض وحذف", callback_data=f"admin_reject_{user_id}")
-    kb.adjust(2)
-    return kb.as_markup()
+def get_social_status_kb():
+    builder = InlineKeyboardBuilder()
+    for status in ["أعزب / بكر", "متزوج", "مطلق", "أرمل"]:
+        builder.button(text=status, callback_data=f"status_{status}")
+    builder.adjust(2)
+    return builder.as_markup()
 
-def get_gender_kb() -> InlineKeyboardMarkup:
-    kb = InlineKeyboardBuilder()
-    kb.button(text="ذكر 👨", callback_data="gender_male")
-    kb.button(text="أنثى 👩", callback_data="gender_female")
-    kb.adjust(2)
-    return kb.as_markup()
+def get_kids_kb():
+    builder = InlineKeyboardBuilder()
+    builder.button(text="لا يوجد", callback_data="kids_none")
+    builder.button(text="نعم، معي", callback_data="kids_with_me")
+    builder.button(text="نعم، مع الطرف الآخر", callback_data="kids_with_other")
+    builder.adjust(1)
+    return builder.as_markup()
 
-def get_social_status_kb() -> InlineKeyboardMarkup:
-    kb = InlineKeyboardBuilder()
-    statuses = ["أعزب / بكر", "متزوج (للرجال)", "مطلق / مطلقة", "أرمل / أرملة"]
-    for s in statuses:
-        kb.button(text=s, callback_data=f"status_{s}")
-    kb.adjust(2)
-    return kb.as_markup()
+def get_education_kb():
+    builder = InlineKeyboardBuilder()
+    for edu in ["ثانوي فما دون", "دبلوم", "بكالوريوس", "دراسات عليا"]:
+        builder.button(text=edu, callback_data=f"edu_{edu}")
+    builder.adjust(2)
+    return builder.as_markup()
 
-def get_kids_kb() -> InlineKeyboardMarkup:
-    kb = InlineKeyboardBuilder()
-    kb.button(text="لا يوجد", callback_data="kids_none")
-    kb.button(text="نعم، معي", callback_data="kids_with_me")
-    kb.button(text="نعم، مع الطرف الآخر", callback_data="kids_with_other")
-    kb.adjust(1)
-    return kb.as_markup()
+def get_prayer_kb():
+    builder = InlineKeyboardBuilder()
+    builder.button(text="محافظ على الصلاة", callback_data="pray_good")
+    builder.button(text="أغلب الأوقات", callback_data="pray_average")
+    builder.adjust(1)
+    return builder.as_markup()
 
-def get_education_kb() -> InlineKeyboardMarkup:
-    kb = InlineKeyboardBuilder()
-    levels = ["ثانوي فما دون", "دبلوم", "بكالوريوس", "ماجستير / دكتوراه"]
-    for lvl in levels:
-        kb.button(text=lvl, callback_data=f"edu_{lvl}")
-    kb.adjust(2)
-    return kb.as_markup()
+def get_smoking_kb():
+    builder = InlineKeyboardBuilder()
+    builder.button(text="نعم", callback_data="smoke_yes")
+    builder.button(text="لا", callback_data="smoke_no")
+    builder.adjust(2)
+    return builder.as_markup()
 
-def get_jobs_kb() -> InlineKeyboardMarkup:
-    kb = InlineKeyboardBuilder()
-    jobs = ["مجال طبي/صحي", "تعليم/أكاديميا", "هندسة/تقنية", "تجارة/أعمال", "موظف إداري", "لا أعمل", "أخرى"]
-    for job in jobs:
-        kb.button(text=job, callback_data=f"job_{job}")
-    kb.adjust(2)
-    return kb.as_markup()
+def get_hijab_kb():
+    builder = InlineKeyboardBuilder()
+    for h in ["نقاب", "خمار", "حجاب عادي"]:
+        builder.button(text=h, callback_data=f"hijab_{h}")
+    builder.adjust(3)
+    return builder.as_markup()
 
-def get_prayer_kb() -> InlineKeyboardMarkup:
-    kb = InlineKeyboardBuilder()
-    kb.button(text="محافظ ولله الحمد", callback_data="pray_good")
-    kb.button(text="أغلب الأوقات", callback_data="pray_average")
-    kb.button(text="مقصر وأسأل الله الهداية", callback_data="pray_bad")
-    kb.adjust(1)
-    return kb.as_markup()
+def get_country_kb():
+    builder = InlineKeyboardBuilder()
+    countries = ["السعودية", "مصر", "تركيا", "المغرب", "الجزائر", "أخرى"]
+    for c in countries:
+        builder.button(text=c, callback_data=f"country_{c}")
+    builder.adjust(2)
+    return builder.as_markup()
 
-def get_smoking_kb() -> InlineKeyboardMarkup:
-    kb = InlineKeyboardBuilder()
-    kb.button(text="نعم", callback_data="smoke_yes")
-    kb.button(text="لا", callback_data="smoke_no")
-    kb.button(text="أحياناً", callback_data="smoke_sometimes")
-    kb.adjust(3)
-    return kb.as_markup()
+def get_travel_kb():
+    builder = InlineKeyboardBuilder()
+    builder.button(text="نعم، مستعد", callback_data="travel_yes")
+    builder.button(text="لا، غير مستعد", callback_data="travel_no")
+    builder.adjust(2)
+    return builder.as_markup()
 
-def get_hijab_kb() -> InlineKeyboardMarkup:
-    kb = InlineKeyboardBuilder()
-    styles = ["منتقبة", "محجبة عباءة", "محجبة عادي", "غير محجبة"]
-    for style in styles:
-        kb.button(text=style, callback_data=f"hijab_{style}")
-    kb.adjust(2)
-    return kb.as_markup()
-
-def get_country_kb() -> InlineKeyboardMarkup:
-    kb = InlineKeyboardBuilder()
-    countries = ["تركيا 🇹🇷", "ألمانيا 🇩🇪", "ألبانيا 🇦🇱", "أخرى"]
-    for country in countries:
-        kb.button(text=country, callback_data=f"country_{country}")
-    kb.adjust(2)
-    return kb.as_markup()
-
-def get_states_kb(country: str) -> InlineKeyboardMarkup:
-    kb = InlineKeyboardBuilder()
-    states = []
-    if "تركيا" in country:
-        states = ["إسطنبول", "غازي عنتاب", "أنقرة", "مرسين", "بورصة", "هاتاي", "إزمير"]
-    elif "ألمانيا" in country:
-        states = ["برلين", "ميونخ", "هامبورغ", "كولونيا", "فرانكفورت", "دوسلدورف", "شتوتغارت"]
-    elif "ألبانيا" in country:
-        states = ["تيرانا", "دوريس", "فلوره", "شكودر", "كورتشا", "إلباسان", "بيرات"]
+# --- دالة الاختيار المتعدد الذكية لنوع الزواج ---
+def get_marriage_types_kb(selected_keys: list):
+    builder = InlineKeyboardBuilder()
+    m_types = {
+        "first": "زواج شرعي (أول)",
+        "poly": "تعدد",
+        "misyar": "مسيار"
+    }
     
-    for state in states:
-        kb.button(text=state, callback_data=f"state_{state}")
-    if not states:
-        kb.button(text="إدخال يدوي", callback_data="state_manual")
-    kb.adjust(2)
-    return kb.as_markup()
+    for key, val in m_types.items():
+        # وضع علامة صح إذا كان مضافاً في القائمة
+        text = f"✅ {val}" if key in selected_keys else val
+        builder.button(text=text, callback_data=f"mtype_{key}")
+    
+    builder.button(text="✅ تأكيد الاختيارات للانتقال", callback_data="mtype_confirm")
+    builder.adjust(1)
+    return builder.as_markup()
 
-def get_travel_kb() -> InlineKeyboardMarkup:
-    kb = InlineKeyboardBuilder()
-    kb.button(text="نعم، لا أمانع السفر/الانتقال", callback_data="travel_yes")
-    kb.button(text="لا أرغب في الانتقال", callback_data="travel_no")
-    kb.adjust(1)
-    return kb.as_markup()
+def get_housing_kb():
+    builder = InlineKeyboardBuilder()
+    builder.button(text="متوفر لدي", callback_data="house_mine")
+    builder.button(text="أشترط توفره لدى الطرف الآخر", callback_data="house_other")
+    builder.adjust(1)
+    return builder.as_markup()
 
-def get_marriage_types_kb(selected_types: list) -> InlineKeyboardMarkup:
-    kb = InlineKeyboardBuilder()
-    types = ["مسيار (معلن أو غير معلن)", "شرعي موثق قانوناً", "شرعي بتوثيق عرفي", "شرعي زيارات"]
-    for t in types:
-        mark = "✅ " if t in selected_types else ""
-        kb.button(text=f"{mark}{t}", callback_data=f"mtype_{t}")
-    if selected_types:
-        kb.button(text="💾 تأكيد الاختيارات", callback_data="mtype_confirm")
-    kb.adjust(1)
-    return kb.as_markup()
-
-def get_housing_kb() -> InlineKeyboardMarkup:
-    kb = InlineKeyboardBuilder()
-    kb.button(text="السكن متوفر لدي (للمسيار)", callback_data="house_mine")
-    kb.button(text="أشترط توفر السكن لدى الطرف الآخر", callback_data="house_other")
-    kb.adjust(1)
-    return kb.as_markup()
+def get_admin_kb(user_id):
+    builder = InlineKeyboardBuilder()
+    builder.button(text="✅ قبول ونشر", callback_data=f"admin_approve_{user_id}")
+    builder.button(text="❌ رفض", callback_data=f"admin_reject_{user_id}")
+    builder.adjust(2)
+    return builder.as_markup()
