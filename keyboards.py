@@ -14,17 +14,23 @@ def get_gender_kb():
     return builder.as_markup()
 
 # لوحة ديناميكية تتغير حسب الجنس
+# لوحة ديناميكية تتغير حسب الجنس وتراعي المنطق الشرعي
 def get_social_status_kb(gender: str):
     builder = InlineKeyboardBuilder()
+    
     if gender == "أنثى":
-        statuses = ["بكر", "متزوجة", "مطلقة", "أرملة"]
+        # تم حذف "متزوجة" لأنه لا يستقيم منطقياً ولا شرعياً
+        statuses = ["بكر", "مطلقة", "أرملة"] 
     else:
+        # الرجل يتاح له "متزوج" لغرض التعدد
         statuses = ["أعزب", "متزوج", "مطلق", "أرمل"]
         
     for status in statuses:
         builder.button(text=status, callback_data=f"status_{status}")
+        
     builder.adjust(2)
     return builder.as_markup()
+
 
 def get_kids_kb():
     builder = InlineKeyboardBuilder()
