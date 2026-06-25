@@ -6,6 +6,20 @@ def get_agreement_kb() -> InlineKeyboardMarkup:
     kb.button(text="أتعهد بالجدية وأوافق على الشروط", callback_data="agree_terms")
     return kb.as_markup()
 
+# زر التعديل لمن سجل مسبقاً
+def get_edit_kb() -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(text="تعديل بياناتي (مسموح مرة واحدة فقط)", callback_data="edit_profile")
+    return kb.as_markup()
+
+# أزرار الإدارة (تظهر لك فقط)
+def get_admin_kb(user_id: int) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(text="✅ قبول ونشر في القناة", callback_data=f"admin_approve_{user_id}")
+    kb.button(text="❌ رفض وحذف", callback_data=f"admin_reject_{user_id}")
+    kb.adjust(2)
+    return kb.as_markup()
+
 def get_gender_kb() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
     kb.button(text="ذكر 👨", callback_data="gender_male")
