@@ -13,29 +13,67 @@ import keyboards as kb
 logging.basicConfig(level=logging.INFO)
 TOKEN = "8868061017:AAFHWqZAljMOwkFmzPRa5AHk7HwtRxESKwo"
 
+# =========== إعدادات الإدارة والقناة ===========
+ADMIN_ID = 7556662373  
+CHANNEL_ID = -1003869521696 
+# ===============================================
+
 bot = Bot(token=TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
 
 async def init_db():
     async with aiosqlite.connect('marriage_db.db') as db:
         await db.execute('''CREATE TABLE IF NOT EXISTS users (
-            user_id INTEGER PRIMARY KEY, gender TEXT, age TEXT, social_status TEXT, 
-            kids TEXT, education TEXT, job TEXT, prayer TEXT, smoking TEXT, 
-            hijab TEXT, height TEXT, weight TEXT, skin_color TEXT, health TEXT, 
-            country TEXT, state_name TEXT, travel_willingness TEXT, 
-            marriage_type TEXT, housing TEXT, partner_specs TEXT, bio TEXT)''')
+            user_id INTEGER PRIMARY KEY, name TEXT, gender TEXT, age TEXT, 
+            social_status TEXT, kids TEXT, education TEXT, job TEXT, 
+            prayer TEXT, smoking TEXT, hijab TEXT, height TEXT, weight TEXT, 
+            skin_color TEXT, health TEXT, country TEXT, state_name TEXT, 
+            travel_willingness TEXT, marriage_type TEXT, housing TEXT, 
+            partner_specs TEXT, bio TEXT, edit_count INTEGER DEFAULT 0)''')
+        
+        try:
+            await db.execute("ALTER TABLE users ADD COLUMN name TEXT")
+            await db.execute("ALTER TABLE users ADD COLUMN edit_count INTEGER DEFAULT 0")
+        except:
+            pass
         await db.commit()
 
 @dp.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext):
     await state.clear()
+    
+    async with aiosqlite.connect('marriage_db.db') as db:
+        async with db.execute('SELECT edit_count FROM users WHERE user_id = ?', (message.from_user.id,)) as cursor:
+            row = await cursor.fetchone()
+            if row:
+                edit_count = row[0]
+                if edit_count >= 1:
+                    await message.answer("عذراً، لديك بطاقة مسجلة بالفعل. لقد استنفدت الحد الأقصى المسموح به لتعديل البيانات لضمان المصداقية.")
+                else:
+                    await message.answer("لديك بطاقة مسجلة مسبقاً. تنبيه: يسمح لك بتعديل بياناتك مرة واحدة فقط.", reply_markup=kb.get_edit_kb())
+                return
+
     welcome_text = "بسم الله الرحمن الرحيم\nأهلاً بك في مسار العفة.\nنرجو التعهد بالجدية والمصداقية التامة للبدء."
     await message.answer(welcome_text, reply_markup=kb.get_agreement_kb())
     await state.set_state(Registration.agreement)
 
+@dp.callback_query(F.data == "edit_profile")
+async def process_edit_profile(callback: CallbackQuery, state: FSMContext):
+    await callback.message.edit_text("سنبدأ بتحديث بياناتك. يرجى التعهد بالجدية:", reply_markup=kb.get_agreement_kb())
+    await state.set_state(Registration.agreement)
+    async with aiosqlite.connect('marriage_db.db') as db:
+        await db.execute('UPDATE users SET edit_count = 1 WHERE user_id = ?', (callback.from_user.id,))
+        await db.commit()
+
 @dp.callback_query(Registration.agreement, F.data == "agree_terms")
 async def process_agreement(callback: CallbackQuery, state: FSMContext):
-    await callback.message.edit_text("✅ جزاك الله خيراً.\nيرجى تحديد الجنس:", reply_markup=kb.get_gender_kb())
+    await callback.message.edit_text("✅ جزاك الله خيراً.\n\nما هو الاسم أو اللقب الذي تفضل استخدامه في بطاقتك؟")
+    await state.set_state(Registration.name)
+
+@dp.message(Registration.name)
+async def process_name(message: Message, state: FSMContext):
+    await state.update_data(name=message.text)
+    await message.answer("يرجى تحديد الجنس:", reply_markup=kb.get_gender_kb())
     await state.set_state(Registration.gender)
 
 @dp.callback_query(Registration.gender, F.data.startswith("gender_"))
@@ -100,7 +138,6 @@ async def process_smoking(callback: CallbackQuery, state: FSMContext):
     await state.update_data(smoking=smoke_map.get(callback.data))
     
     data = await state.get_data()
-    # الذكاء البرمجي: سؤال الحجاب للإناث فقط
     if data.get("gender") == "أنثى":
         await callback.message.edit_text("ما هو نمط الحجاب؟", reply_markup=kb.get_hijab_kb())
         await state.set_state(Registration.hijab)
@@ -184,7 +221,6 @@ async def process_mtype(callback: CallbackQuery, state: FSMContext):
         joined_mtypes = " و ".join(selected_mtypes)
         await state.update_data(marriage_type=joined_mtypes)
         
-        # تفريع السكن للمسيار
         if any("مسيار" in t or "زيارات" in t for t in selected_mtypes):
             await callback.message.edit_text("بخصوص السكن في زواج المسيار:", reply_markup=kb.get_housing_kb())
             await state.set_state(Registration.housing)
@@ -219,14 +255,23 @@ async def process_partner_specs(message: Message, state: FSMContext):
 async def process_bio(message: Message, state: FSMContext):
     await state.update_data(bio=message.text)
     data = await state.get_data()
+    user_id = message.from_user.id
     
     async with aiosqlite.connect('marriage_db.db') as db:
-        await db.execute('''INSERT OR REPLACE INTO users 
-            (user_id, gender, age, social_status, kids, education, job, prayer, smoking, 
+        await db.execute('''INSERT INTO users 
+            (user_id, name, gender, age, social_status, kids, education, job, prayer, smoking, 
             hijab, height, weight, skin_color, health, country, state_name, 
             travel_willingness, marriage_type, housing, partner_specs, bio)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', 
-            (message.from_user.id, data.get('gender'), data.get('age'), data.get('social_status'), 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET 
+            name=excluded.name, gender=excluded.gender, age=excluded.age, social_status=excluded.social_status,
+            kids=excluded.kids, education=excluded.education, job=excluded.job, prayer=excluded.prayer,
+            smoking=excluded.smoking, hijab=excluded.hijab, height=excluded.height, weight=excluded.weight,
+            skin_color=excluded.skin_color, health=excluded.health, country=excluded.country, state_name=excluded.state_name,
+            travel_willingness=excluded.travel_willingness, marriage_type=excluded.marriage_type, housing=excluded.housing,
+            partner_specs=excluded.partner_specs, bio=excluded.bio
+            ''', 
+            (user_id, data.get('name'), data.get('gender'), data.get('age'), data.get('social_status'), 
             data.get('kids'), data.get('education'), data.get('job'), data.get('prayer'), 
             data.get('smoking'), data.get('hijab'), data.get('height'), data.get('weight'), 
             data.get('skin_color'), data.get('health'), data.get('country'), data.get('state_name'), 
@@ -235,14 +280,47 @@ async def process_bio(message: Message, state: FSMContext):
         await db.commit()
 
     profile_summary = (f"✅ **تم حفظ البيانات بنجاح!**\n\n"
+                       f"الاسم/اللقب: {data.get('name')}\n"
                        f"النوع: {data.get('gender')} | العمر: {data.get('age')}\n"
                        f"الحالة: {data.get('social_status')}\n"
                        f"أنماط الزواج: {data.get('marriage_type')}\n"
-                       f"السكن (بالمسيار): {data.get('housing')}\n\n"
-                       f"سيتم التفعيل للبحث عن مطابقة قريباً.")
+                       f"السكن: {data.get('housing')}\n\n"
+                       f"**البحث والربط سيتم تفعيله وإيصال المستخدمين ببعض عند بداية شهر 8.**")
     
     await message.answer(profile_summary, parse_mode="Markdown")
+    
+    admin_card = (f"📌 **طلب تسجيل جديد للمراجعة**\n"
+                  f"الاسم: {data.get('name')} | المعرف: `{user_id}`\n"
+                  f"الجنس: {data.get('gender')} | العمر: {data.get('age')}\n"
+                  f"الحالة: {data.get('social_status')} | الأبناء: {data.get('kids')}\n"
+                  f"الإقامة: {data.get('country')} - {data.get('state_name')}\n"
+                  f"الزواج: {data.get('marriage_type')} | السكن: {data.get('housing')}\n"
+                  f"الوظيفة: {data.get('job')} | الصلاة: {data.get('prayer')}\n"
+                  f"شروط الشريك: {data.get('partner_specs')}\n"
+                  f"نبذة: {data.get('bio')}")
+    
+    try:
+        await bot.send_message(ADMIN_ID, admin_card, reply_markup=kb.get_admin_kb(user_id), parse_mode="Markdown")
+    except Exception as e:
+        print(f"لم يتم إرسال رسالة الإدارة. الخطأ: {e}")
+
     await state.clear()
+
+@dp.callback_query(F.data.startswith("admin_approve_"))
+async def admin_approve(callback: CallbackQuery):
+    user_id = int(callback.data.split("_")[2])
+    card_text = callback.message.text.replace("📌 **طلب تسجيل جديد للمراجعة**\n", "")
+    public_card = f"📢 **استمارة جديدة**\n{card_text}\n\nللتواصل، يرجى حفظ رقم الاستمارة."
+    
+    try:
+        await bot.send_message(CHANNEL_ID, public_card, parse_mode="Markdown")
+        await callback.message.edit_text(f"{callback.message.text}\n\n✅ **تم النشر في القناة.**")
+    except Exception as e:
+        await callback.answer(f"حدث خطأ أثناء النشر: {e}", show_alert=True)
+
+@dp.callback_query(F.data.startswith("admin_reject_"))
+async def admin_reject(callback: CallbackQuery):
+    await callback.message.edit_text(f"{callback.message.text}\n\n❌ **تم الرفض.**")
 
 async def main():
     await init_db()
