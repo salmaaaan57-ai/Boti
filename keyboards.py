@@ -1,9 +1,9 @@
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 def get_agreement_kb() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
-    kb.button(text="أتعهد بذلك وأوافق على الشروط", callback_data="agree_terms")
+    kb.button(text="أتعهد بالجدية وأوافق على الشروط", callback_data="agree_terms")
     return kb.as_markup()
 
 def get_gender_kb() -> InlineKeyboardMarkup:
@@ -15,18 +15,17 @@ def get_gender_kb() -> InlineKeyboardMarkup:
 
 def get_social_status_kb() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
-    # شرعاً لا يصح للمتزوجة طلب الزواج، لذا تم تعديل الخيارات للإناث
-    statuses = ["بكر / لم يسبق لها الزواج", "مطلقة", "أرملة"]
+    statuses = ["أعزب / بكر", "متزوج (للرجال)", "مطلق / مطلقة", "أرمل / أرملة"]
     for s in statuses:
         kb.button(text=s, callback_data=f"status_{s}")
-    kb.adjust(1)
+    kb.adjust(2)
     return kb.as_markup()
 
 def get_kids_kb() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
     kb.button(text="لا يوجد", callback_data="kids_none")
-    kb.button(text="نعم، وهم معي", callback_data="kids_with_me")
-    kb.button(text="نعم، مع والدهم", callback_data="kids_with_other")
+    kb.button(text="نعم، معي", callback_data="kids_with_me")
+    kb.button(text="نعم، مع الطرف الآخر", callback_data="kids_with_other")
     kb.adjust(1)
     return kb.as_markup()
 
@@ -40,11 +39,7 @@ def get_education_kb() -> InlineKeyboardMarkup:
 
 def get_jobs_kb() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
-    jobs = [
-        "مجال طبي وصحي", "تعليم وأكاديميا", 
-        "هندسة وتقنية معلومات", "تجارة وأعمال", 
-        "موظفة إدارية / حكومية", "لا أعمل حالياً", "أخرى"
-    ]
+    jobs = ["مجال طبي/صحي", "تعليم/أكاديميا", "هندسة/تقنية", "تجارة/أعمال", "موظف إداري", "لا أعمل", "أخرى"]
     for job in jobs:
         kb.button(text=job, callback_data=f"job_{job}")
     kb.adjust(2)
@@ -52,9 +47,9 @@ def get_jobs_kb() -> InlineKeyboardMarkup:
 
 def get_prayer_kb() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
-    kb.button(text="محافظة ولله الحمد", callback_data="pray_good")
+    kb.button(text="محافظ ولله الحمد", callback_data="pray_good")
     kb.button(text="أغلب الأوقات", callback_data="pray_average")
-    kb.button(text="مقصرة وأسأل الله الهداية", callback_data="pray_bad")
+    kb.button(text="مقصر وأسأل الله الهداية", callback_data="pray_bad")
     kb.adjust(1)
     return kb.as_markup()
 
@@ -94,43 +89,32 @@ def get_states_kb(country: str) -> InlineKeyboardMarkup:
     
     for state in states:
         kb.button(text=state, callback_data=f"state_{state}")
-    
     if not states:
         kb.button(text="إدخال يدوي", callback_data="state_manual")
-        
     kb.adjust(2)
     return kb.as_markup()
 
 def get_travel_kb() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
-    kb.button(text="نعم، لا أمانع الانتقال/السفر", callback_data="travel_yes")
+    kb.button(text="نعم، لا أمانع السفر/الانتقال", callback_data="travel_yes")
     kb.button(text="لا أرغب في الانتقال", callback_data="travel_no")
     kb.adjust(1)
     return kb.as_markup()
 
-# تم تحديث هذه الدالة لدعم الاختيار المتعدد (وضع علامة ✅)
 def get_marriage_types_kb(selected_types: list) -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
-    types = [
-        "شرعي موثق قانوناً", 
-        "شرعي بتوثيق عرفي", 
-        "شرعي زيارات", 
-        "مسيار (معلن أو غير معلن)"
-    ]
-    
+    types = ["مسيار (معلن أو غير معلن)", "شرعي موثق قانوناً", "شرعي بتوثيق عرفي", "شرعي زيارات"]
     for t in types:
         mark = "✅ " if t in selected_types else ""
         kb.button(text=f"{mark}{t}", callback_data=f"mtype_{t}")
-    
     if selected_types:
         kb.button(text="💾 تأكيد الاختيارات", callback_data="mtype_confirm")
-        
     kb.adjust(1)
     return kb.as_markup()
 
 def get_housing_kb() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
-    kb.button(text="السكن متوفر لدي", callback_data="house_mine")
-    kb.button(text="يشترط توفره من الزوج", callback_data="house_other")
+    kb.button(text="السكن متوفر لدي (للمسيار)", callback_data="house_mine")
+    kb.button(text="أشترط توفر السكن لدى الطرف الآخر", callback_data="house_other")
     kb.adjust(1)
     return kb.as_markup()
