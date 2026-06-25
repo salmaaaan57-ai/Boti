@@ -2,6 +2,7 @@ from aiogram.fsm.state import State, StatesGroup
 
 class Registration(StatesGroup):
     agreement = State()
+    name = State()       # تمت إضافة الاسم هنا
     gender = State()
     age = State()
     social_status = State()
@@ -10,7 +11,7 @@ class Registration(StatesGroup):
     job = State()
     prayer = State()
     smoking = State()
-    hijab = State()  # للإناث فقط
+    hijab = State()
     height = State()
     weight = State()
     skin_color = State()
@@ -19,6 +20,6 @@ class Registration(StatesGroup):
     state_name = State()
     travel_willingness = State()
     marriage_type = State()
-    housing = State()  # مفصلي في المسيار
+    housing = State()
     partner_specs = State()
     bio = State()
