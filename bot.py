@@ -13,11 +13,11 @@ import keyboards as kb
 logging.basicConfig(level=logging.INFO)
 
 # ===============================================
-# ⚙️ الإعدادات الأساسية (ضع بياناتك هنا)
+# ⚙️ الإعدادات الأساسية
 # ===============================================
-TOKEN = "8787127714:AAEOsu05CBrLstCCs0OQWVMoA3f5TuVQ5CI"
-ADMIN_ID = 7556662373          # الآي دي الرقمي الخاص بك
-CHANNEL_ID = "-1003869521696"  # آي دي القناة (يجب أن يبدأ بـ -100)
+TOKEN = "ضع_توكن_البوت_هنا"
+ADMIN_ID = 123456789         # رقمك التعريفي
+CHANNEL_ID = "-100123456789" # معرف القناة
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
@@ -36,7 +36,7 @@ async def init_db():
         await db.commit()
 
 # ===============================================
-# 🚀 بدء التسجيل والتوجيه
+# 🚀 التسلسل ومسار الاستمارة
 # ===============================================
 @dp.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext):
@@ -56,7 +56,6 @@ async def process_name(message: Message, state: FSMContext):
     await message.answer("📝 **[سؤال 2 من 17]**\nيرجى تحديد الجنس:", reply_markup=kb.get_gender_kb())
     await state.set_state(Registration.gender)
 
-# [التصحيح القطعي لمعالجة الجنس]
 @dp.callback_query(Registration.gender, F.data.startswith("gender_"))
 async def process_gender(callback: CallbackQuery, state: FSMContext):
     gender = "ذكر" if callback.data == "gender_male" else "أنثى"
@@ -70,12 +69,16 @@ async def process_age(message: Message, state: FSMContext):
         await message.answer("⚠️ يرجى إدخال العمر كـ **رقم** فقط:")
         return
     await state.update_data(age=message.text)
-    await message.answer("📝 **[سؤال 4 من 17]**\nما هي الحالة الاجتماعية؟", reply_markup=kb.get_social_status_kb())
+    
+    data = await state.get_data()
+    user_gender = data.get("gender")
+    
+    await message.answer(
+        "📝 **[سؤال 4 من 17]**\nما هي الحالة الاجتماعية؟", 
+        reply_markup=kb.get_social_status_kb(user_gender)
+    )
     await state.set_state(Registration.social_status)
 
-# ===============================================
-# 🔄 الفلترة الذكية للأبناء والحجاب
-# ===============================================
 @dp.callback_query(Registration.social_status, F.data.startswith("status_"))
 async def process_status(callback: CallbackQuery, state: FSMContext):
     status = callback.data.replace("status_", "")
@@ -134,9 +137,6 @@ async def process_hijab(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("📝 **[سؤال 11 من 17]**\nكم يبلغ الطول تقريباً؟ (مثال: 160)")
     await state.set_state(Registration.height)
 
-# ===============================================
-# ✍️ الإدخالات الموجهة بأمثلة
-# ===============================================
 @dp.message(Registration.height)
 async def process_height(message: Message, state: FSMContext):
     await state.update_data(height=message.text)
@@ -178,17 +178,12 @@ async def process_state_text(message: Message, state: FSMContext):
     await message.answer("هل لديك مرونة في الانتقال أو السفر؟", reply_markup=kb.get_travel_kb())
     await state.set_state(Registration.travel_willingness)
 
-# ===============================================
-# 🔘 الاختيار المتعدد (Multi-Select) لنوع الزواج
-# ===============================================
 @dp.callback_query(Registration.travel_willingness, F.data.startswith("travel_"))
 async def process_travel(callback: CallbackQuery, state: FSMContext):
     travel = "نعم" if "yes" in callback.data else "لا"
     await state.update_data(travel_willingness=travel, selected_mtypes=[])
-    
     await callback.message.edit_text(
-        "📝 **[سؤال 16 من 17]**\nما هي أنماط الزواج المقبولة لك؟\n"
-        "*(تنبيه: يمكنك اختيار أكثر من نمط، ثم اضغط تأكيد)*", 
+        "📝 **[سؤال 16 من 17]**\nما هي أنماط الزواج المقبولة لك؟\n*(يمكنك اختيار أكثر من نمط، ثم اضغط تأكيد)*", 
         reply_markup=kb.get_marriage_types_kb([])
     )
     await state.set_state(Registration.marriage_type)
@@ -203,7 +198,6 @@ async def process_mtype(callback: CallbackQuery, state: FSMContext):
         if not selected:
             await callback.answer("⚠️ يرجى اختيار نمط واحد على الأقل!", show_alert=True)
             return
-        
         m_types_dict = {"first": "زواج شرعي (أول)", "poly": "تعدد", "misyar": "مسيار"}
         joined_mtypes = " و ".join([m_types_dict[k] for k in selected])
         await state.update_data(marriage_type=joined_mtypes)
@@ -232,13 +226,10 @@ async def ask_partner_specs(message, state: FSMContext):
     await message.edit_text("📝 **[سؤال 17 من 17]**\nما هي أهم صفتين أو ثلاث لا تتنازل عنها في الشريك؟")
     await state.set_state(Registration.partner_specs)
 
-# ===============================================
-# 🔒 صمام التواصل المزدوج والنهاية
-# ===============================================
 @dp.message(Registration.partner_specs)
 async def process_partner_specs(message: Message, state: FSMContext):
     await state.update_data(partner_specs=message.text)
-    await message.answer("📞 كيف يمكن للإدارة التواصل معك عند التطابق؟\n(يرجى كتابة رقم هاتف، أو معرف تليجرام، أو إيميل):")
+    await message.answer("📞 كيف يمكن للإدارة التواصل معك عند التطابق؟\n(اكتب رقم هاتف، أو معرف تليجرام، أو إيميل):")
     await state.set_state(Registration.contact_info)
 
 @dp.message(Registration.contact_info)
@@ -252,14 +243,12 @@ async def process_bio(message: Message, state: FSMContext):
     await state.update_data(bio=message.text)
     data = await state.get_data()
     
-    # تأمين سحب البيانات لتجنب الانهيار
     user_id = message.from_user.id
     raw_username = message.from_user.username
     safe_username = f"@{raw_username}" if raw_username else "بدون معرف (مخفي)"
 
     await message.answer("⚠️ **تنبيه:**\nجاري حفظ الاستمارة، يرجى العلم أن التعديل لا يُتاح إلا لمرة واحدة فقط لضمان الجدية والموثوقية.")
 
-    # الحفظ في قاعدة البيانات
     async with aiosqlite.connect('marriage_db.db') as db:
         await db.execute('''INSERT INTO users 
             (user_id, username, name, gender, age, social_status, kids, education, job, prayer, smoking, 
@@ -284,7 +273,6 @@ async def process_bio(message: Message, state: FSMContext):
 
     await message.answer("✅ **تم رفع بطاقتك بنجاح للإدارة للمراجعة.**")
     
-    # إرسال بطاقة الإدارة
     admin_card = (f"📌 **طلب تسجيل جديد للمراجعة**\n"
                   f"الاسم: {data.get('name')} | الجنس: {data.get('gender')}\n"
                   f"العمر: {data.get('age')} | الحالة: {data.get('social_status')}\n"
@@ -295,19 +283,15 @@ async def process_bio(message: Message, state: FSMContext):
                   f"➖➖➖➖➖➖➖➖\n"
                   f"🔒 **بيانات الإدارة:**\n"
                   f"الآي دي: `{user_id}`\n"
-                  f"المعرف المسحوب: {safe_username}\n"
-                  f"التواصل المكتوب: {data.get('contact_info')}")
+                  f"المعرف: {safe_username}\n"
+                  f"التواصل: {data.get('contact_info')}")
     
     try:
         await bot.send_message(ADMIN_ID, admin_card, reply_markup=kb.get_admin_kb(user_id), parse_mode="Markdown")
     except Exception as e:
-        logging.error(f"Error sending admin card: {e}")
-
+        logging.error(f"Error: {e}")
     await state.clear()
 
-# ===============================================
-# ⚖️ قرارات الإدارة
-# ===============================================
 @dp.callback_query(F.data.startswith("admin_approve_"))
 async def admin_approve(callback: CallbackQuery):
     user_id = int(callback.data.split("_")[2])
@@ -319,21 +303,16 @@ async def admin_approve(callback: CallbackQuery):
         await bot.send_message(CHANNEL_ID, public_card, parse_mode="Markdown")
         await callback.message.edit_text(f"{callback.message.text}\n\n✅ **تم النشر.**")
     except Exception as e:
-        await callback.answer("خطأ في النشر للقناة.", show_alert=True)
+        await callback.answer("خطأ في النشر.", show_alert=True)
 
 @dp.callback_query(F.data.startswith("admin_reject_"))
 async def admin_reject(callback: CallbackQuery):
     await callback.message.edit_text(f"{callback.message.text}\n\n❌ **تم الرفض.**")
 
-# ===============================================
-# ⚙️ المحرك الرئيسي ومانع التعارض (Conflict Resolver)
-# ===============================================
 async def main():
     await init_db()
-    # هذا السطر يطرد أي جلسة معلقة أو متعارضة قبل الإقلاع لمنع الانهيار
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
 if __name__ == '__main__':
     asyncio.run(main())
-
