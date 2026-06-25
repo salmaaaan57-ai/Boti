@@ -13,9 +13,15 @@ def get_gender_kb():
     builder.adjust(2)
     return builder.as_markup()
 
-def get_social_status_kb():
+# لوحة ديناميكية تتغير حسب الجنس
+def get_social_status_kb(gender: str):
     builder = InlineKeyboardBuilder()
-    for status in ["أعزب / بكر", "متزوج", "مطلق", "أرمل"]:
+    if gender == "أنثى":
+        statuses = ["بكر", "متزوجة", "مطلقة", "أرملة"]
+    else:
+        statuses = ["أعزب", "متزوج", "مطلق", "أرمل"]
+        
+    for status in statuses:
         builder.button(text=status, callback_data=f"status_{status}")
     builder.adjust(2)
     return builder.as_markup()
@@ -71,7 +77,7 @@ def get_travel_kb():
     builder.adjust(2)
     return builder.as_markup()
 
-# --- دالة الاختيار المتعدد الذكية لنوع الزواج ---
+# الاختيار المتعدد الذكي
 def get_marriage_types_kb(selected_keys: list):
     builder = InlineKeyboardBuilder()
     m_types = {
@@ -79,12 +85,9 @@ def get_marriage_types_kb(selected_keys: list):
         "poly": "تعدد",
         "misyar": "مسيار"
     }
-    
     for key, val in m_types.items():
-        # وضع علامة صح إذا كان مضافاً في القائمة
         text = f"✅ {val}" if key in selected_keys else val
         builder.button(text=text, callback_data=f"mtype_{key}")
-    
     builder.button(text="✅ تأكيد الاختيارات للانتقال", callback_data="mtype_confirm")
     builder.adjust(1)
     return builder.as_markup()
@@ -102,3 +105,4 @@ def get_admin_kb(user_id):
     builder.button(text="❌ رفض", callback_data=f"admin_reject_{user_id}")
     builder.adjust(2)
     return builder.as_markup()
+
