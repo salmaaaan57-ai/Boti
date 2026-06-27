@@ -2,8 +2,8 @@ import asyncio
 import logging
 import aiosqlite
 from aiogram import Bot, Dispatcher, F
-from aiogram.types import Message, CallbackQuery
-from aiogram.filters import CommandStart
+from aiogram.types import Message, CallbackQuery, LabeledPrice, PreCheckoutQuery
+from aiogram.filters import CommandStart, Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.memory import MemoryStorage
 
@@ -23,20 +23,148 @@ bot = Bot(token=TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
 
 # ===============================================
-# 🗄️ تهيئة قاعدة البيانات
+# 🗄️ تهيئة قاعدة البيانات (مع التحديث الذكي)
 # ===============================================
 async def init_db():
     async with aiosqlite.connect('marriage_db.db') as db:
+        # إنشاء الجدول الأساسي
         await db.execute('''CREATE TABLE IF NOT EXISTS users (
             user_id INTEGER PRIMARY KEY, username TEXT, name TEXT, gender TEXT, age TEXT, 
             social_status TEXT, kids TEXT, education TEXT, job TEXT, prayer TEXT, 
             smoking TEXT, hijab TEXT, height TEXT, weight TEXT, skin_color TEXT, 
             health TEXT, country TEXT, state_name TEXT, travel_willingness TEXT, 
             marriage_type TEXT, housing TEXT, partner_specs TEXT, contact_info TEXT, bio TEXT)''')
+        
+        # [تحديث ذكي]: إضافة أعمدة الرصيد والدفع إذا لم تكن موجودة سابقاً (لحماية البيانات القديمة)
+        try:
+            await db.execute('ALTER TABLE users ADD COLUMN requests_count INTEGER DEFAULT 0')
+        except Exception:
+            pass # العمود موجود مسبقاً
+        
+        try:
+            await db.execute('ALTER TABLE users ADD COLUMN is_premium INTEGER DEFAULT 0')
+        except Exception:
+            pass # العمود موجود مسبقاً
+            
         await db.commit()
 
 # ===============================================
-# 🚀 التسلسل ومسار الاستمارة
+# 👑 أوامر الإدارة (إعطاء الصلاحية يدوياً)
+# ===============================================
+@dp.message(Command("grant"))
+async def grant_premium(message: Message):
+    # التأكد أن الأمر صادر منك أنت فقط
+    if message.from_user.id != ADMIN_ID:
+        return
+    
+    try:
+        # استخراج الآي دي من الرسالة (مثال: /grant 123456789)
+        target_id = int(message.text.split()[1])
+    except (IndexError, ValueError):
+        await message.answer("⚠️ الاستخدام الصحيح: `/grant [ID]`\nمثال: `/grant 123456789`", parse_mode="Markdown")
+        return
+    
+    # تحديث قاعدة البيانات لمنح العضوية المفتوحة
+    async with aiosqlite.connect('marriage_db.db') as db:
+        await db.execute("UPDATE users SET is_premium = 1 WHERE user_id = ?", (target_id,))
+        await db.commit()
+    
+    await message.answer(f"✅ تم تفعيل الصلاحية اللامحدودة (Premium) للمستخدم: `{target_id}` بنجاح.", parse_mode="Markdown")
+    
+    # إشعار المستخدم بالهدية
+    try:
+        await bot.send_message(target_id, "🎁 **مبارك!**\nقامت الإدارة بمنحك عضوية مميزة (Premium) استثنائية.\nيمكنك الآن إرسال طلبات تواصل غير محدودة بحرية تامة.")
+    except Exception:
+        pass # المستخدم قام بحظر البوت
+
+# ===============================================
+# 💸 نظام الدفع بنجوم تليجرام (Telegram Stars)
+# ===============================================
+async def send_premium_invoice(chat_id):
+    prices = [LabeledPrice(label="باقة التواصل اللامحدود", amount=50)] # السعر: 50 نجمة
+    await bot.send_invoice(
+        chat_id=chat_id,
+        title="تفعيل الباقة المفتوحة ⭐️",
+        description="لقد استنفدت طلباتك المجانية (3 طلبات).\nللاستمرار في إرسال طلبات التواصل، يرجى تفعيل الباقة غير المحدودة مقابل 50 نجمة.",
+        payload="premium_access_50",
+        provider_token="", # ⚠️ يُترك فارغاً تماماً في نظام النجوم
+        currency="XTR",    # العملة الخاصة بنجوم تليجرام
+        prices=prices
+    )
+
+@dp.pre_checkout_query()
+async def process_pre_checkout(pre_checkout_query: PreCheckoutQuery):
+    # الموافقة الأمنية لتليجرام لسحب النجوم
+    await pre_checkout_query.answer(ok=True)
+
+@dp.message(F.successful_payment)
+async def process_successful_payment(message: Message):
+    if message.successful_payment.invoice_payload == "premium_access_50":
+        user_id = message.from_user.id
+        # تفعيل حساب المستخدم في قاعدة البيانات
+        async with aiosqlite.connect('marriage_db.db') as db:
+            await db.execute("UPDATE users SET is_premium = 1 WHERE user_id = ?", (user_id,))
+            await db.commit()
+        
+        await message.answer("✅ **تم الدفع بنجاح!**\nلقد تم خصم النجوم من رصيدك. حسابك الآن يمتلك صلاحيات (Premium) لامحدودة. شكراً لثقتك.")
+
+# ===============================================
+# 📩 محرك طلبات التواصل (الحد المجاني والفلترة)
+# للاستخدام يكتب المستخدم: /connect 123456789
+# ===============================================
+@dp.message(Command("connect"))
+async def request_connection(message: Message):
+    user_id = message.from_user.id
+    
+    try:
+        target_id = int(message.text.split()[1])
+    except (IndexError, ValueError):
+        await message.answer("⚠️ لإرسال طلب تواصل، اكتب الأمر متبوعاً برقم الاستمارة (الآي دي).\nمثال: `/connect 123456789`", parse_mode="Markdown")
+        return
+        
+    async with aiosqlite.connect('marriage_db.db') as db:
+        db.row_factory = aiosqlite.Row
+        cursor = await db.execute("SELECT requests_count, is_premium FROM users WHERE user_id = ?", (user_id,))
+        user_data = await cursor.fetchone()
+        
+        # التأكد أن المرسل مسجل في القاعدة أصلاً
+        if not user_data:
+            await message.answer("⚠️ عذراً، يجب عليك إتمام التسجيل وتعبئة بطاقتك أولاً قبل إرسال طلبات تواصل للآخرين.")
+            return
+            
+        is_premium = user_data['is_premium']
+        requests_count = user_data['requests_count']
+        
+        # فحص الصلاحيات
+        if is_premium == 1:
+            # عضو مدفوع (أو مستثنى إدارياً) - يُسمح له مباشرة
+            await send_contact_notification(user_id, target_id)
+            await message.answer(f"✅ تم إرسال طلب التواصل للطرف الآخر بنجاح.\n*(أنت تستخدم باقة Premium اللامحدودة)*", parse_mode="Markdown")
+        else:
+            # عضو مجاني - فحص العداد
+            if requests_count < 3:
+                # تحديث العداد
+                await db.execute("UPDATE users SET requests_count = requests_count + 1 WHERE user_id = ?", (user_id,))
+                await db.commit()
+                await send_contact_notification(user_id, target_id)
+                await message.answer(f"✅ تم إرسال طلب التواصل للطرف الآخر بنجاح.\n*(استهلكت {requests_count + 1} من أصل 3 طلبات مجانية)*", parse_mode="Markdown")
+            else:
+                # استنفد الرصيد - إصدار الفاتورة
+                await send_premium_invoice(user_id)
+
+async def send_contact_notification(sender_id, target_id):
+    # دالة إرسال الإشعار للطرف الآخر (سيتم تطويرها لاحقاً لتعرض البطاقة كاملة)
+    try:
+        await bot.send_message(
+            target_id, 
+            f"📩 **إشعار هام!**\nهناك مستخدم برقم `{sender_id}` وجد بطاقتك ويرغب بالتواصل معك.\n(سيتم تفعيل أزرار القبول والرفض لعرض التفاصيل قريباً)",
+            parse_mode="Markdown"
+        )
+    except Exception:
+        pass # الطرف الآخر حظر البوت أو غير موجود
+
+# ===============================================
+# 🚀 التسلسل ومسار الاستمارة (كما هو بلا تغيير)
 # ===============================================
 @dp.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext):
