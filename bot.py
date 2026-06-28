@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.INFO)
 # ===============================================
 # ⚙️ الإعدادات الأساسية
 # ===============================================
-TOKEN = "ضع_توكن_البوت_هنا"
+TOKEN = "8787127714:AAEOsu05CBrLstCCs0OQWVMoA3f5TuVQ5CI"
 ADMIN_ID = 7556662373
 CHANNEL_ID = "-1003869521696"
 WEBAPP_URL = "https://salmaaaaan57-ai.github.io/mithaq-form/"
