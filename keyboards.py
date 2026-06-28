@@ -1,15 +1,13 @@
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.types.web_app_info import WebAppInfo
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 def get_webapp_kb(webapp_url: str):
-    # زر رئيسي يفتح صفحة الاستمارة داخل تليجرام
-    return ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="📝 تعبئة الاستمارة", web_app=WebAppInfo(url=webapp_url))]
-        ],
-        resize_keyboard=True
+    # تم تحويل الزر إلى Inline (زر شفاف) لضمان توافقية متصفح تليجرام الداخلي وتجاوز الشاشة البيضاء
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="📝 اضغط هنا لتعبئة الاستمارة", web_app=WebAppInfo(url=webapp_url))]
+        ]
     )
 
 def get_admin_kb(user_id):
