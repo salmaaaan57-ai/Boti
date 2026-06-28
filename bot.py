@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.INFO)
 TOKEN = "8787127714:AAEOsu05CBrLstCCs0OQWVMoA3f5TuVQ5CI" # توكن البوت
 ADMIN_ID = 7556662373         # رقمك التعريفي
 CHANNEL_ID = "-1003869521696" # معرف القناة
-WEBAPP_URL = "https://salmaaaaan57-ai.github.io/Mithaq/index.html?v=1"
+WEBAPP_URL = "https://salmaaaaan57-ai.github.io/mithaq-form/"
 bot = Bot(token=TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
 
