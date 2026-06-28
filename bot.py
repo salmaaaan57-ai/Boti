@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.INFO)
 TOKEN = "8787127714:AAEOsu05CBrLstCCs0OQWVMoA3f5TuVQ5CI"
 ADMIN_ID = 7556662373
 CHANNEL_ID = "-1003869521696"
-WEBAPP_URL = "https://salmaaaaan57-ai.github.io/mithaq-form/"
+WEBAPP_URL = "https://salmaaaan57-ai.github.io/Boti/"
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
